@@ -1,4 +1,4 @@
-import { initializeMcpApiHandler } from "@/app/lib/mcp-api-handler";
+import { initializeMcpApiHandler } from "@/lib/MCP/mcp-api-handler";
 import { NextRequest } from "next/server";
 
 const handler = initializeMcpApiHandler(
