@@ -1,26 +1,28 @@
-import type { Metadata } from "next";
-import { Space_Grotesk } from "next/font/google";
-import "./globals.css";
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-space-grotesk",
-});
+import type React from "react"
+import "./globals.css"
+import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Onchain Mantle MCP",
-  description: "Connect to Mantle Network's leading protocols through MCP",
-};
+  title: "Onchain Mantle MPC",
+  description:
+    "Connect this mpc server to discuss your DeFi strategies with real-time data from Mantle's leading protocols",
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={spaceGrotesk.variable}>
-      <body>{children}</body>
+    <html lang="en">
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center p-8">{children}</body>
     </html>
-  );
+  )
 }
+
