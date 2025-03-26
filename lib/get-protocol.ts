@@ -10,14 +10,12 @@ interface ProtocolData {
   twitter?: string;
   github?: { [key: string]: string };
   currentChainTvls: { [key: string]: number };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   chainTvls: { [key: string]: any };
 }
 
 interface FilteredProtocolData
   extends Omit<ProtocolData, "currentChainTvls" | "chainTvls"> {
   currentChainTvls: { Mantle: number };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   chainTvls: { Mantle: any };
 }
 
