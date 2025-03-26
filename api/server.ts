@@ -146,7 +146,7 @@ const handler = initializeMcpApiHandler(
       TOOL_CONFIGS.GET_FANS.name,
       TOOL_CONFIGS.GET_FANS.description,
       TOOL_CONFIGS.GET_FANS.parameters,
-      async ({ artist_account_id, page, limit }) => {
+      async ({ artist_account_id, page = 1, limit = 20 }) => {
         const response = await getFans({ artist_account_id, page, limit });
         const fanSummaries = response.fans
           .map(
@@ -171,7 +171,7 @@ const handler = initializeMcpApiHandler(
       TOOL_CONFIGS.GET_POSTS.name,
       TOOL_CONFIGS.GET_POSTS.description,
       TOOL_CONFIGS.GET_POSTS.parameters,
-      async ({ artist_account_id, page, limit }) => {
+      async ({ artist_account_id, page = 1, limit = 20 }) => {
         const response = await getPosts({ artist_account_id, page, limit });
         const postSummaries = response.posts
           .map(
