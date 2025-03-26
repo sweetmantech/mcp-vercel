@@ -6,7 +6,7 @@ import { getHistoricalTVL } from "../lib/get-tvl";
 import { getMerchantMoeSummary } from "../lib/get-protocol";
 import { getStablecoinData } from "../lib/get-stablecoin";
 import { getFans } from "../lib/RecoupAPI/fans";
-import { getPosts } from "../lib/RecoupAPI/posts";
+import { handleGetPosts } from "../lib/handlers/postsHandler";
 import { TOOL_CONFIGS } from "../lib/toolConfigs";
 
 const handler = initializeMcpApiHandler(
@@ -175,30 +175,7 @@ const handler = initializeMcpApiHandler(
       TOOL_CONFIGS.GET_POSTS.name,
       TOOL_CONFIGS.GET_POSTS.description,
       TOOL_CONFIGS.GET_POSTS.parameters,
-      async ({ artist_account_id }) => {
-        const response = await getPosts({
-          artist_account_id,
-          page: 1,
-          limit: 20,
-        });
-        const postSummaries = response.posts
-          .map(
-            (post) =>
-              `Post ID: ${post.id}\nURL: ${
-                post.post_url
-              }\nLast Updated: ${new Date(post.updated_at).toLocaleString()}`
-          )
-          .join("\n\n");
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Found ${response.pagination.total_count} posts (showing page ${response.pagination.page} of ${response.pagination.total_pages}):\n\n${postSummaries}`,
-            },
-          ],
-        };
-      }
+      handleGetPosts
     );
   },
   {
