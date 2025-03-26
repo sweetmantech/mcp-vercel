@@ -5,17 +5,13 @@ import { getTokenPrice } from "../lib/get-token-prices";
 import { getHistoricalTVL } from "../lib/get-tvl";
 import { getMerchantMoeSummary } from "../lib/get-protocol";
 import { getStablecoinData } from "../lib/get-stablecoin";
-import { getFans } from "../lib/RecoupAPI/fans";
-import { getPosts } from "../lib/RecoupAPI/posts";
-import { TOOL_CONFIGS } from "../lib/toolConfigs";
 
 const handler = initializeMcpApiHandler(
   (server) => {
-    // Token price tool
     server.tool(
-      TOOL_CONFIGS.GET_TOKEN_PRICE.name,
-      TOOL_CONFIGS.GET_TOKEN_PRICE.description,
-      TOOL_CONFIGS.GET_TOKEN_PRICE.parameters,
+      "get-token-price",
+      "Get the price of a token in mantle network",
+      { contract_address: z.string() },
       async ({ contract_address }) => {
         const price = await getTokenPrice(contract_address);
         return {
@@ -25,12 +21,10 @@ const handler = initializeMcpApiHandler(
         };
       }
     );
-
-    // LTV tool
     server.tool(
-      TOOL_CONFIGS.GET_LTV.name,
-      TOOL_CONFIGS.GET_LTV.description,
-      TOOL_CONFIGS.GET_LTV.parameters,
+      "get-ltv",
+      "Get the total value locked of mantle network",
+      {},
       async () => {
         const tvlData = await getHistoricalTVL();
         const latestTvl = tvlData[tvlData.length - 1].tvl;
@@ -59,13 +53,13 @@ const handler = initializeMcpApiHandler(
       }
     );
 
-    // Merchant Moe tool
     server.tool(
-      TOOL_CONFIGS.GET_MERCHANT_MOE.name,
-      TOOL_CONFIGS.GET_MERCHANT_MOE.description,
-      TOOL_CONFIGS.GET_MERCHANT_MOE.parameters,
+      "get-protocol-merchant-moe-summary",
+      "Get key metrics for the Merchant Moe protocol on Mantle",
+      {},
       async () => {
         const summary = await getMerchantMoeSummary();
+
         const report = [
           `${summary.health.category} ${summary.name}`,
           `TVL: ${summary.tvl}`,
@@ -84,13 +78,13 @@ const handler = initializeMcpApiHandler(
       }
     );
 
-    // Treehouse tool
     server.tool(
-      TOOL_CONFIGS.GET_TREEHOUSE.name,
-      TOOL_CONFIGS.GET_TREEHOUSE.description,
-      TOOL_CONFIGS.GET_TREEHOUSE.parameters,
+      "get-protocol-treehouse-protocol-summary",
+      "Get key metrics for a Tree House on Mantle",
+      {},
       async () => {
         const summary = await getTreeHouseProtocolSummary();
+
         const report = [
           `${summary.health.category} ${summary.name}`,
           `TVL: ${summary.tvl}`,
@@ -109,11 +103,10 @@ const handler = initializeMcpApiHandler(
       }
     );
 
-    // USDT TVL tool
     server.tool(
-      TOOL_CONFIGS.GET_USDT_TVL.name,
-      TOOL_CONFIGS.GET_USDT_TVL.description,
-      TOOL_CONFIGS.GET_USDT_TVL.parameters,
+      "get-USDT-tvl",
+      "Get the total value locked of USDT on Mantle",
+      {},
       async () => {
         const data = await getStablecoinData(1);
         const latestTvl = data[data.length - 1].totalBridgedToUSD.peggedUSD;
@@ -125,11 +118,10 @@ const handler = initializeMcpApiHandler(
       }
     );
 
-    // USDC TVL tool
     server.tool(
-      TOOL_CONFIGS.GET_USDC_TVL.name,
-      TOOL_CONFIGS.GET_USDC_TVL.description,
-      TOOL_CONFIGS.GET_USDC_TVL.parameters,
+      "get-USDC-tvl",
+      "Get the total value locked of USDC on Mantle",
+      {},
       async () => {
         const data = await getStablecoinData(2);
         const latestTvl = data[data.length - 1].totalBridgedToUSD.peggedUSD;
@@ -140,78 +132,38 @@ const handler = initializeMcpApiHandler(
         };
       }
     );
-
-    // Fans tool
-    server.tool(
-      TOOL_CONFIGS.GET_FANS.name,
-      TOOL_CONFIGS.GET_FANS.description,
-      TOOL_CONFIGS.GET_FANS.parameters,
-      async ({ artist_account_id, page, limit }) => {
-        const response = await getFans({ artist_account_id, page, limit });
-        const fanSummaries = response.fans
-          .map(
-            (fan) =>
-              `${fan.username} (${fan.region}) - ${fan.followerCount} followers\n${fan.bio}`
-          )
-          .join("\n\n");
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Found ${response.pagination.total_count} fans (showing page ${response.pagination.page} of ${response.pagination.total_pages}):\n\n${fanSummaries}`,
-            },
-          ],
-        };
-      }
-    );
-
-    // Posts tool
-    server.tool(
-      TOOL_CONFIGS.GET_POSTS.name,
-      TOOL_CONFIGS.GET_POSTS.description,
-      TOOL_CONFIGS.GET_POSTS.parameters,
-      async ({ artist_account_id, page, limit }) => {
-        const response = await getPosts({ artist_account_id, page, limit });
-        const postSummaries = response.posts
-          .map(
-            (post) =>
-              `Post ID: ${post.id}\nURL: ${
-                post.post_url
-              }\nLast Updated: ${new Date(post.updated_at).toLocaleString()}`
-          )
-          .join("\n\n");
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Found ${response.pagination.total_count} posts (showing page ${response.pagination.page} of ${response.pagination.total_pages}):\n\n${postSummaries}`,
-            },
-          ],
-        };
-      }
-    );
   },
   {
     capabilities: {
-      tools: Object.fromEntries(
-        Object.values(TOOL_CONFIGS).map((config) => [
-          config.name,
-          {
-            description: config.description,
-            parameters: Object.fromEntries(
-              Object.entries(config.parameters).map(([key, schema]) => [
-                key,
-                {
-                  type: schema instanceof z.ZodString ? "string" : "number",
-                  description: schema.description,
-                },
-              ])
-            ),
+      tools: {
+        "get-token-price": {
+          description: "Get the price of a token in mantle network",
+          parameters: {
+            contract_address: { type: "string" },
           },
-        ])
-      ),
+        },
+        "get-ltv": {
+          description: "Get the total value locked of mantle network",
+          parameters: {},
+        },
+        "get-protocol-merchant-moe-summary": {
+          description:
+            "Get key metrics for the Merchant Moe protocol on Mantle",
+          parameters: {},
+        },
+        "get-protocol-treehouse-protocol-summary": {
+          description: "Get key metrics for a Tree House on Mantle",
+          parameters: {},
+        },
+        "get-USDT-tvl": {
+          description: "Get the total value locked of USDT on Mantle",
+          parameters: {},
+        },
+        "get-USDC-tvl": {
+          description: "Get the total value locked of USDC on Mantle",
+          parameters: {},
+        },
+      },
     },
   }
 );
