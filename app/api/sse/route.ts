@@ -7,7 +7,7 @@ import {
   getMerchantMoeSummary,
   getTreeHouseProtocolSummary,
 } from "@/lib/MCP/get-protocol";
-import { getStablecoinData } from "@/app/lib/get-stablecoin";
+import { getStablecoinData } from "@/lib/MCP/get-stablecoin";
 
 const handler = initializeMcpApiHandler(
   (server) => {
