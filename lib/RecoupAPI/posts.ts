@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { API_BASE_URL, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "./constants";
 
-// Post data schema
 export const PostSchema = z.object({
   id: z.string(),
   post_url: z.string().url(),
@@ -10,7 +9,6 @@ export const PostSchema = z.object({
 
 export type Post = z.infer<typeof PostSchema>;
 
-// Query parameters schema
 export const PostQuerySchema = z.object({
   artist_account_id: z.string(),
   page: z.number().min(1).default(1),
@@ -46,7 +44,6 @@ export async function getPosts(params: PostQueryParams): Promise<PostResponse> {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        // Add authentication headers when available
       },
     }
   );
