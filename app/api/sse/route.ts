@@ -7,7 +7,8 @@ import {
   getTreeHouseProtocolSummary,
 } from "@/lib/MCP/get-protocol";
 import { getStablecoinData } from "@/lib/MCP/get-stablecoin";
-import { NextApiRequest, NextApiResponse } from "next";
+import { IncomingMessage, ServerResponse } from "http";
+import { Socket } from "net";
 
 export const config = {
   runtime: "nodejs",
@@ -143,10 +144,37 @@ const mcpHandler = initializeMcpApiHandler((server) => {
   );
 });
 
-export async function GET(req: NextApiRequest, res: NextApiResponse) {
-  return mcpHandler(req, res);
+function createIncomingMessage(req: Request): IncomingMessage {
+  const socket = new Socket();
+  const nodeReq = new IncomingMessage(socket);
+
+  // Copy over the basic properties
+  nodeReq.method = req.method;
+  nodeReq.url = req.url;
+  nodeReq.headers = {};
+  req.headers.forEach((value, key) => {
+    nodeReq.headers[key] = value;
+  });
+
+  return nodeReq;
 }
 
-export async function POST(req: NextApiRequest, res: NextApiResponse) {
-  return mcpHandler(req, res);
+export async function GET(req: Request) {
+  const nodeReq = createIncomingMessage(req);
+  const nodeRes = new ServerResponse(nodeReq);
+  await mcpHandler(nodeReq, nodeRes);
+  return new Response(undefined, {
+    status: nodeRes.statusCode,
+    headers: nodeRes.getHeaders() as HeadersInit,
+  });
+}
+
+export async function POST(req: Request) {
+  const nodeReq = createIncomingMessage(req);
+  const nodeRes = new ServerResponse(nodeReq);
+  await mcpHandler(nodeReq, nodeRes);
+  return new Response(undefined, {
+    status: nodeRes.statusCode,
+    headers: nodeRes.getHeaders() as HeadersInit,
+  });
 }
