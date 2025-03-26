@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex items-center justify-center p-8">
@@ -27,7 +25,7 @@ export default function Home() {
           <p className="text-xl text-gray-300 max-w-2xl mx-auto font-light leading-relaxed">
             Connect this mcp server to cursor, claude, t3chat or your preferred
             ai workspace to discuss your DeFi strategies with real-time data
-            from Mantle's leading protocols.
+            from Mantle&apos;s leading protocols.
           </p>
         </div>
 
