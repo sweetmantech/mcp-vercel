@@ -7,6 +7,7 @@ import {
   getTreeHouseProtocolSummary,
 } from "@/lib/MCP/get-protocol";
 import { getStablecoinData } from "@/lib/MCP/get-stablecoin";
+import { NextApiRequest, NextApiResponse } from "next";
 
 export const config = {
   runtime: "nodejs",
@@ -15,7 +16,7 @@ export const config = {
   },
 };
 
-const handler = initializeMcpApiHandler((server) => {
+const mcpHandler = initializeMcpApiHandler((server) => {
   server.tool(
     "get-token-price",
     "Get the price of a token in mantle network",
@@ -142,4 +143,10 @@ const handler = initializeMcpApiHandler((server) => {
   );
 });
 
-export default handler;
+export async function GET(req: NextApiRequest, res: NextApiResponse) {
+  return mcpHandler(req, res);
+}
+
+export async function POST(req: NextApiRequest, res: NextApiResponse) {
+  return mcpHandler(req, res);
+}
