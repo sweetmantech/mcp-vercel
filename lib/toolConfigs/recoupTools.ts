@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export const RecoupTools = {
   GET_FANS: {
     name: "get_artist_fans",
@@ -8,7 +10,9 @@ export const RecoupTools = {
   GET_POSTS: {
     name: "get_artist_posts",
     description:
-      "Get a list of social media posts for the test artist across all social media profiles",
-    parameters: {},
+      "Get a list of social media posts for a specific artist across all social media profiles",
+    parameters: {
+      artist_account_id: z.string(),
+    },
   },
 } as const;

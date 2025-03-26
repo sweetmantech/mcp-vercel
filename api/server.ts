@@ -175,9 +175,9 @@ const handler = initializeMcpApiHandler(
       TOOL_CONFIGS.GET_POSTS.name,
       TOOL_CONFIGS.GET_POSTS.description,
       TOOL_CONFIGS.GET_POSTS.parameters,
-      async () => {
+      async ({ artist_account_id }) => {
         const response = await getPosts({
-          artist_account_id: "10fd2b53-3fb8-4d75-bd23-f28520a3c7fc",
+          artist_account_id,
           page: 1,
           limit: 20,
         });
