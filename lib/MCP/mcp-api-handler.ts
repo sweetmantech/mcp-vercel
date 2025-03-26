@@ -6,7 +6,6 @@ import { createClient } from "redis";
 import { Socket } from "net";
 import { Readable } from "stream";
 import { ServerOptions } from "@modelcontextprotocol/sdk/server/index.js";
-import vercelJson from "../vercel.json";
 
 interface SerializedRequest {
   requestId: string;
@@ -20,8 +19,7 @@ export function initializeMcpApiHandler(
   initializeServer: (server: McpServer) => void,
   serverOptions: ServerOptions = {}
 ) {
-  const maxDuration =
-    vercelJson?.functions?.["api/server.ts"]?.maxDuration || 800;
+  const maxDuration = 800;
   const redisUrl = process.env.REDIS_URL || process.env.KV_URL;
   if (!redisUrl) {
     throw new Error("REDIS_URL environment variable is not set");
@@ -207,7 +205,7 @@ export function initializeMcpApiHandler(
       );
       console.log(`Published requests:${sessionId}`, serializedRequest);
 
-      let timeout = setTimeout(async () => {
+      const timeout = setTimeout(async () => {
         await redis.unsubscribe(`responses:${sessionId}:${requestId}`);
         res.statusCode = 408;
         res.end("Request timed out");
@@ -229,6 +227,7 @@ interface FakeIncomingMessageOptions {
   method?: string;
   url?: string;
   headers?: IncomingHttpHeaders;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body?: string | Buffer | Record<string, any> | null;
   socket?: Socket;
 }
@@ -272,7 +271,8 @@ function createFakeIncomingMessage(
   // Copy over the stream methods
   req.push = readable.push.bind(readable);
   req.read = readable.read.bind(readable);
-  req.on = readable.on.bind(readable);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  req.on = readable.on.bind(readable) as any;
   req.pipe = readable.pipe.bind(readable);
 
   return req;
