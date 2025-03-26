@@ -1,8 +1,6 @@
-import { MantleTools } from "./mantleTools";
 import { RecoupTools } from "./recoupTools";
 
 export const TOOL_CONFIGS = {
-  ...MantleTools,
   ...RecoupTools,
 } as const;
 
