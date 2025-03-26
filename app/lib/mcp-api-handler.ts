@@ -273,7 +273,9 @@ function createFakeIncomingMessage(
   req.read = readable.read.bind(readable);
 
   // Type assertion to handle the event binding
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (req as any).on = readable.on.bind(readable);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (req as any).pipe = readable.pipe.bind(readable);
 
   return req;

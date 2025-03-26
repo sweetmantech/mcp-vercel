@@ -33,9 +33,11 @@ const handler = initializeMcpApiHandler(
 );
 
 export async function GET(req: NextRequest) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return handler(req as any, new Response() as any);
 }
 
 export async function POST(req: NextRequest) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return handler(req as any, new Response() as any);
 }

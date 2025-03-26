@@ -2,7 +2,7 @@ import { initializeMcpApiHandler } from "@/app/lib/mcp-api-handler";
 import { NextRequest } from "next/server";
 
 const handler = initializeMcpApiHandler(
-  (server) => {
+  () => {
     // The server configuration is shared with the SSE handler
   },
   {
@@ -15,5 +15,6 @@ const handler = initializeMcpApiHandler(
 );
 
 export async function POST(req: NextRequest) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return handler(req as any, new Response() as any);
 }
