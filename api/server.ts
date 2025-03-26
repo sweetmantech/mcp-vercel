@@ -6,15 +6,12 @@ import { TOOL_CONFIGS } from "../lib/toolConfigs";
 
 const handler = initializeMcpApiHandler(
   (server) => {
-    // Fans tool
     server.tool(
       TOOL_CONFIGS.GET_FANS.name,
       TOOL_CONFIGS.GET_FANS.description,
       TOOL_CONFIGS.GET_FANS.parameters,
       handleGetFans
     );
-
-    // Posts tool
     server.tool(
       TOOL_CONFIGS.GET_POSTS.name,
       TOOL_CONFIGS.GET_POSTS.description,
