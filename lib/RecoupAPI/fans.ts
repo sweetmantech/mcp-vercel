@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { API_BASE_URL, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "./constants";
 
-// Fan data schema
 export const FanSchema = z.object({
   id: z.string(),
   username: z.string(),
@@ -16,7 +15,6 @@ export const FanSchema = z.object({
 
 export type Fan = z.infer<typeof FanSchema>;
 
-// Query parameters schema
 export const FanQuerySchema = z.object({
   artist_account_id: z.string(),
   page: z.number().min(1).default(1),
@@ -52,7 +50,6 @@ export async function getFans(params: FanQueryParams): Promise<FanResponse> {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        // Add authentication headers when available
       },
     }
   );
