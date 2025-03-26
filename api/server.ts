@@ -5,7 +5,7 @@ import { getTokenPrice } from "../lib/get-token-prices";
 import { getHistoricalTVL } from "../lib/get-tvl";
 import { getMerchantMoeSummary } from "../lib/get-protocol";
 import { getStablecoinData } from "../lib/get-stablecoin";
-import { getFans } from "../lib/RecoupAPI/fans";
+import { handleGetFans } from "../lib/handlers/fansHandler";
 import { handleGetPosts } from "../lib/handlers/postsHandler";
 import { TOOL_CONFIGS } from "../lib/toolConfigs";
 
@@ -146,28 +146,7 @@ const handler = initializeMcpApiHandler(
       TOOL_CONFIGS.GET_FANS.name,
       TOOL_CONFIGS.GET_FANS.description,
       TOOL_CONFIGS.GET_FANS.parameters,
-      async () => {
-        const response = await getFans({
-          artist_account_id: "10fd2b53-3fb8-4d75-bd23-f28520a3c7fc",
-          page: 1,
-          limit: 20,
-        });
-        const fanSummaries = response.fans
-          .map(
-            (fan) =>
-              `${fan.username} (${fan.region}) - ${fan.followerCount} followers\n${fan.bio}`
-          )
-          .join("\n\n");
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Found ${response.pagination.total_count} fans (showing page ${response.pagination.page} of ${response.pagination.total_pages}):\n\n${fanSummaries}`,
-            },
-          ],
-        };
-      }
+      handleGetFans
     );
 
     // Posts tool

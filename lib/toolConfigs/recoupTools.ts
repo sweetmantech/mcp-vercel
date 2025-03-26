@@ -4,8 +4,10 @@ export const RecoupTools = {
   GET_FANS: {
     name: "get_artist_fans",
     description:
-      "Get a list of fans for the test artist across all social media profiles",
-    parameters: {},
+      "Get a list of fans for a specific artist across all social media profiles",
+    parameters: {
+      artist_account_id: z.string(),
+    },
   },
   GET_POSTS: {
     name: "get_artist_posts",
