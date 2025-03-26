@@ -2,10 +2,10 @@ import getRawBody from "raw-body";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
-import { createClient } from "redis";
 import { Socket } from "net";
 import { Readable } from "stream";
 import { ServerOptions } from "@modelcontextprotocol/sdk/server/index.js";
+import { kv } from "@vercel/kv";
 
 interface SerializedRequest {
   requestId: string;
@@ -15,39 +15,52 @@ interface SerializedRequest {
   headers: IncomingHttpHeaders;
 }
 
+interface MessageSubscriber {
+  callback: (message: string) => void;
+}
+
+const subscribers = new Map<string, Set<MessageSubscriber>>();
+
 export function initializeMcpApiHandler(
   initializeServer: (server: McpServer) => void,
   serverOptions: ServerOptions = {}
 ) {
   const maxDuration = 800; // Default max duration in seconds
-  const redisUrl = process.env.REDIS_URL || process.env.KV_URL;
-  if (!redisUrl) {
-    throw new Error("REDIS_URL environment variable is not set");
-  }
-
-  const redis = createClient({
-    url: redisUrl,
-  });
-  const redisPublisher = createClient({
-    url: redisUrl,
-  });
-
-  redis.on("error", (error: Error) => {
-    console.error("Redis error", error);
-  });
-
-  redisPublisher.on("error", (error: Error) => {
-    console.error("Redis error", error);
-  });
-
-  const redisPromise = Promise.all([redis.connect(), redisPublisher.connect()]);
   let servers: McpServer[] = [];
+
+  // Helper function to manage subscribers
+  const subscribeToChannel = (
+    channel: string,
+    callback: (message: string) => void
+  ) => {
+    if (!subscribers.has(channel)) {
+      subscribers.set(channel, new Set());
+    }
+    const subscriber = { callback };
+    subscribers.get(channel)?.add(subscriber);
+    return () => {
+      subscribers.get(channel)?.delete(subscriber);
+      if (subscribers.get(channel)?.size === 0) {
+        subscribers.delete(channel);
+      }
+    };
+  };
+
+  // Helper function to publish messages
+  const publishMessage = async (channel: string, message: string) => {
+    // Store message in KV
+    await kv.set(`message:${channel}:${Date.now()}`, message, { ex: 3600 }); // Expire after 1 hour
+
+    // Notify subscribers
+    subscribers.get(channel)?.forEach((subscriber) => {
+      subscriber.callback(message);
+    });
+  };
 
   return async function mcpApiHandler(
     req: IncomingMessage,
     res: ServerResponse
   ) {
-    await redisPromise;
     const url = new URL(
       req.url || "",
       `https://${req.headers.host || "localhost"}`
@@ -86,10 +99,10 @@ export function initializeMcpApiHandler(
         });
       }
 
-      // Handle messages from Redis
+      // Handle messages
       const handleMessage = async (message: string) => {
-        console.log("Received message from Redis", message);
-        logInContext("log", "Received message from Redis", message);
+        console.log("Received message", message);
+        logInContext("log", "Received message", message);
         const request = JSON.parse(message) as SerializedRequest;
 
         const req = createFakeIncomingMessage({
@@ -115,7 +128,7 @@ export function initializeMcpApiHandler(
 
         await transport.handlePostMessage(req, syntheticRes);
 
-        await redisPublisher.publish(
+        await publishMessage(
           `responses:${sessionId}:${request.requestId}`,
           JSON.stringify({
             status,
@@ -143,7 +156,10 @@ export function initializeMcpApiHandler(
         logs = [];
       }, 100);
 
-      await redis.subscribe(`requests:${sessionId}`, handleMessage);
+      const unsubscribe = subscribeToChannel(
+        `requests:${sessionId}`,
+        handleMessage
+      );
       console.log(`Subscribed to requests:${sessionId}`);
 
       let timeout: NodeJS.Timeout;
@@ -158,7 +174,7 @@ export function initializeMcpApiHandler(
       async function cleanup() {
         clearTimeout(timeout);
         clearInterval(interval);
-        await redis.unsubscribe(`requests:${sessionId}`, handleMessage);
+        unsubscribe();
         console.log("Done");
         res.statusCode = 200;
         res.end();
@@ -194,35 +210,44 @@ export function initializeMcpApiHandler(
         headers: req.headers,
       };
 
-      const timeout = setTimeout(async () => {
-        await redis.unsubscribe(`responses:${sessionId}:${requestId}`);
-        res.statusCode = 408;
-        res.end("Request timed out");
-      }, 10 * 1000);
+      let responseReceived = false;
+      const responsePromise = new Promise<void>((resolve) => {
+        const timeout = setTimeout(() => {
+          if (!responseReceived) {
+            res.statusCode = 408;
+            res.end("Request timed out");
+            resolve();
+          }
+        }, 10000);
 
-      await redis.subscribe(
-        `responses:${sessionId}:${requestId}`,
-        (message: string) => {
-          clearTimeout(timeout);
-          const response = JSON.parse(message) as {
-            status: number;
-            body: string;
-          };
-          res.statusCode = response.status;
-          res.end(response.body);
-        }
-      );
+        const unsubscribe = subscribeToChannel(
+          `responses:${sessionId}:${requestId}`,
+          (message: string) => {
+            clearTimeout(timeout);
+            if (!responseReceived) {
+              responseReceived = true;
+              const response = JSON.parse(message) as {
+                status: number;
+                body: string;
+              };
+              res.statusCode = response.status;
+              res.end(response.body);
+              unsubscribe();
+              resolve();
+            }
+          }
+        );
+      });
 
-      await redisPublisher.publish(
+      // Publish the request
+      await publishMessage(
         `requests:${sessionId}`,
         JSON.stringify(serializedRequest)
       );
-      console.log(`Published requests:${sessionId}`, serializedRequest);
+      console.log(`Published request:${sessionId}`, serializedRequest);
 
-      res.on("close", async () => {
-        clearTimeout(timeout);
-        await redis.unsubscribe(`responses:${sessionId}:${requestId}`);
-      });
+      // Wait for response or timeout
+      await responsePromise;
     } else {
       res.statusCode = 404;
       res.end("Not found");
@@ -273,9 +298,7 @@ function createFakeIncomingMessage(
   req.read = readable.read.bind(readable);
 
   // Type assertion to handle the event binding
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (req as any).on = readable.on.bind(readable);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (req as any).pipe = readable.pipe.bind(readable);
 
   return req;
