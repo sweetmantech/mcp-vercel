@@ -2,16 +2,25 @@ import { z } from "zod";
 import { initializeMcpApiHandler } from "../lib/mcp-api-handler";
 import { handleGetFans } from "../lib/handlers/fansHandler";
 import { handleGetPosts } from "../lib/handlers/postsHandler";
+import { handleGetArtistProfile } from "../lib/handlers/artistProfileHandler";
 import { TOOL_CONFIGS } from "../lib/toolConfigs";
 
 const handler = initializeMcpApiHandler(
   (server) => {
+    server.tool(
+      TOOL_CONFIGS.GET_ARTIST_PROFILE.name,
+      TOOL_CONFIGS.GET_ARTIST_PROFILE.description,
+      TOOL_CONFIGS.GET_ARTIST_PROFILE.parameters,
+      handleGetArtistProfile
+    );
+
     server.tool(
       TOOL_CONFIGS.GET_FANS.name,
       TOOL_CONFIGS.GET_FANS.description,
       TOOL_CONFIGS.GET_FANS.parameters,
       handleGetFans
     );
+
     server.tool(
       TOOL_CONFIGS.GET_POSTS.name,
       TOOL_CONFIGS.GET_POSTS.description,
