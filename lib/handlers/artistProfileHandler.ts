@@ -1,28 +1,34 @@
 import { getArtistProfile } from "../RecoupAPI/artistProfile";
 
+const log = (level: string, message: string, data?: any) => {
+  console.log(
+    JSON.stringify({
+      level,
+      message,
+      data,
+      timestamp: new Date().toISOString(),
+      service: "artist-profile-handler",
+    })
+  );
+};
+
 export const handleGetArtistProfile = async ({
   artist_account_id,
 }: {
   artist_account_id: string;
 }) => {
-  console.log(
-    "[handleGetArtistProfile] Starting with artist_account_id:",
-    artist_account_id
-  );
+  log("info", "Starting handleGetArtistProfile", { artist_account_id });
 
   try {
-    console.log("[handleGetArtistProfile] Calling getArtistProfile");
+    log("info", "Calling getArtistProfile");
     const response = await getArtistProfile({ artist_account_id });
-    console.log("[handleGetArtistProfile] Got response from getArtistProfile");
+    log("info", "Got response from getArtistProfile");
 
     const { profile } = response;
-    console.log(
-      "[handleGetArtistProfile] Profile data:",
-      JSON.stringify(profile, null, 2)
-    );
+    log("info", "Processing profile data", { profile });
 
     // Create a summary of each social media profile
-    console.log("[handleGetArtistProfile] Creating profile summaries");
+    log("info", "Creating profile summaries");
     const profileSummaries = profile.profiles
       .map(
         (p) =>
@@ -38,7 +44,7 @@ export const handleGetArtistProfile = async ({
       .join("\n\n");
 
     // Create overall statistics summary
-    console.log("[handleGetArtistProfile] Creating overall stats");
+    log("info", "Creating overall stats");
     const overallStats =
       `Total Followers: ${profile.total_followers.toLocaleString()}\n` +
       `Total Following: ${profile.total_following.toLocaleString()}\n` +
@@ -54,14 +60,13 @@ export const handleGetArtistProfile = async ({
       ],
     };
 
-    console.log(
-      "[handleGetArtistProfile] Returning result:",
-      JSON.stringify(result, null, 2)
-    );
+    log("info", "Returning result", { result });
     return result;
   } catch (error) {
-    console.error("[handleGetArtistProfile] Error:", error);
-    // Re-throw the error to be handled by MCP server
+    log("error", "Error in handleGetArtistProfile", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     throw error;
   }
 };

@@ -5,29 +5,41 @@ import { handleGetPosts } from "../lib/handlers/postsHandler";
 import { handleGetArtistProfile } from "../lib/handlers/artistProfileHandler";
 import { TOOL_CONFIGS } from "../lib/toolConfigs";
 
+const log = (level: string, message: string, data?: any) => {
+  console.log(
+    JSON.stringify({
+      level,
+      message,
+      data,
+      timestamp: new Date().toISOString(),
+      service: "mcp-server",
+    })
+  );
+};
+
 const handler = initializeMcpApiHandler(
   (server) => {
     // Add global error handler
     server.server.onerror = (error) => {
-      console.error("[MCP Server] Error:", error);
+      log("error", "MCP Server Error", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+      });
     };
 
     // Wrap tool handlers with error logging
     const wrapHandler = (handler: Function, toolName: string) => {
       return async (...args: any[]) => {
-        console.log(
-          `[${toolName}] Starting with args:`,
-          JSON.stringify(args, null, 2)
-        );
+        log("info", `Starting ${toolName}`, { args });
         try {
           const result = await handler(...args);
-          console.log(
-            `[${toolName}] Success:`,
-            JSON.stringify(result, null, 2)
-          );
+          log("info", `${toolName} succeeded`, { result });
           return result;
         } catch (error) {
-          console.error(`[${toolName}] Error:`, error);
+          log("error", `${toolName} failed`, {
+            error: error instanceof Error ? error.message : "Unknown error",
+            stack: error instanceof Error ? error.stack : undefined,
+          });
           throw error;
         }
       };
